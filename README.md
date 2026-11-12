@@ -19,6 +19,6 @@ typst compile --font-path .fonts resume.typ ayacv.pdf
 | --- | --- |
 | 思源宋体 | 中文正文与标题 |
 | 文鼎楷体 | 中文说明与强调 |
-| Liberation Serif | 英文与数字 |
+| Libertinus Serif | 英文与数字 |
 
 ![简历预览](preview.png)

@@ -27,7 +27,7 @@
   header-name-gap: 0.12em, contact-separator-gap: 0.7em, column-gap: 1em,
 )
 #let settings = state("ayacv-settings", default-style)
-#let emphasis-font-state = state("ayacv-emphasis-font", ("Liberation Serif", "AR PL UKai"))
+#let emphasis-font-state = state("ayacv-emphasis-font", ("Libertinus Serif", "AR PL UKai"))
 
 #let kai(body) = context text(font: emphasis-font-state.get(), body)
 #let date(body) = {
@@ -44,8 +44,8 @@
   name: none, title: none, phone: none, email: none, extra: none, intent: none,
   phone-label: [手机:], email-label: [邮箱:], contacts: (),
   color: "purple",
-  font: ("Liberation Serif", "Source Han Serif"),
-  emphasis-font: ("Liberation Serif", "AR PL UKai"),
+  font: ("Libertinus Serif", "Source Han Serif"),
+  emphasis-font: ("Libertinus Serif", "AR PL UKai"),
   paper: "a4",
   style: (:),
 ) = {

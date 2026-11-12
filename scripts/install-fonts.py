@@ -5,12 +5,13 @@ import io
 import json
 import re
 import tarfile
+import zipfile
 from pathlib import Path
 from urllib.request import urlopen
 
 ADOBE = "https://raw.githubusercontent.com/adobe-fonts/source-han-serif/release/"
 UKAI = "https://deb.debian.org/debian/pool/main/f/fonts-arphic-ukai/"
-LIBERATION = "https://api.github.com/repos/liberationfonts/liberation-fonts/releases/latest"
+LIBERTINUS = "https://api.github.com/repos/alerque/libertinus/releases/latest"
 
 
 def fetch(url):
@@ -32,16 +33,12 @@ def download(directory, name, url, force):
     print(f"已准备：{name}")
 
 
-def liberation_url():
-    release = json.loads(fetch(LIBERATION))
+def libertinus_url():
+    release = json.loads(fetch(LIBERTINUS))
     for asset in release.get("assets", []):
-        if "ttf" in asset["name"] and asset["name"].endswith(".tar.gz"):
+        if asset["name"].endswith(".zip"):
             return asset["browser_download_url"]
-    # 部分发布把字体下载链接放在发布说明中。
-    match = re.search(r"https://github\.com/[^\s)]+/liberation-fonts-ttf-[^\s)]+\.tar\.gz", release.get("body", ""))
-    if not match:
-        raise RuntimeError("Liberation Serif 发布页面未找到字体下载链接")
-    return match.group()
+    raise RuntimeError("Libertinus Serif 发布页面未找到字体压缩包")
 
 
 def ukai_url():
@@ -55,13 +52,19 @@ def ukai_url():
 
 def unpack(directory, url, fonts):
     files = {}
-    with tarfile.open(fileobj=io.BytesIO(fetch(url)), mode="r:*") as archive:
-        for member in archive:
-            if not member.isfile():
-                continue
-            name = Path(member.name).name
-            if name in fonts:
-                files[name] = archive.extractfile(member).read()
+    data = io.BytesIO(fetch(url))
+    if zipfile.is_zipfile(data):
+        with zipfile.ZipFile(data) as archive:
+            for member in archive.namelist():
+                name = Path(member).name
+                if name in fonts:
+                    files[name] = archive.read(member)
+    else:
+        data.seek(0)
+        with tarfile.open(fileobj=data, mode="r:*") as archive:
+            for member in archive:
+                if member.isfile() and Path(member.name).name in fonts:
+                    files[Path(member.name).name] = archive.extractfile(member).read()
     if set(files) != set(fonts):
         raise RuntimeError("字体压缩包缺少所需字体")
     for name, data in files.items():
@@ -77,9 +80,9 @@ def main():
     for weight in ("Regular", "Bold"):
         name = f"SourceHanSerifCN-{weight}.otf"
         download(directory, name, ADOBE + "SubsetOTF/CN/" + name, args.force)
-    fonts = tuple(f"LiberationSerif-{weight}.ttf" for weight in ("Regular", "Bold", "Italic", "BoldItalic"))
+    fonts = tuple(f"LibertinusSerif-{weight}.otf" for weight in ("Regular", "Bold", "Italic", "BoldItalic"))
     if args.force or not all((directory / name).is_file() for name in fonts):
-        unpack(directory, liberation_url(), fonts)
+        unpack(directory, libertinus_url(), fonts)
     if args.force or not (directory / "ukai.ttc").is_file():
         unpack(directory, ukai_url(), ("ukai.ttc",))
     print(f"字体已准备好：{directory}")
